@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Banner de 320x180 para el menú de Android TV -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <path android:fillColor="#0E0D12" android:pathData="M0,0h320v180h-320z" />
+    <path android:fillColor="#1C1922" android:pathData="M0,120h320v60h-320z" />
+    <!-- sofá -->
+    <path android:fillColor="#F2B84B" android:pathData="M64,60h72a8,8 0,0 1,8 8v20h-88v-20a8,8 0,0 1,8 -8z" />
+    <path android:fillColor="#E8A23A" android:pathData="M48,86a8,8 0,0 1,16 0v8h72v-8a8,8 0,0 1,16 0v24a6,6 0,0 1,-6 6h-92a6,6 0,0 1,-6 -6z" />
+    <path android:fillColor="#F2B84B" android:pathData="M60,116h8v8h-8zM132,116h8v8h-8z" />
+    <!-- tira de cine -->
+    <path android:fillColor="#F2B84B" android:pathData="M176,64h104v6h-104zM176,110h104v6h-104z" />
+    <path android:fillColor="#3A3446" android:pathData="M176,74h32v32h-32zM212,74h32v32h-32zM248,74h32v32h-32z" />
+</vector>
