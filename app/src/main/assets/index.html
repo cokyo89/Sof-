@@ -73,6 +73,13 @@
   .card.poster.noimg .ct{display:-webkit-box;top:10px;bottom:auto;color:var(--mute)}
   .card .pvs{position:absolute;top:7px;right:7px;z-index:2;display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end}
   .card .pvs i{font-style:normal;font-size:9px;font-weight:800;color:#fff;padding:2px 5px;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.6)}
+  .card .prog{position:absolute;left:8px;top:8px;z-index:2;font-size:11px;font-weight:800;background:var(--acc);color:var(--bg);padding:3px 7px;border-radius:5px;box-shadow:0 1px 3px rgba(0,0,0,.6)}
+  .card .bar{position:absolute;left:0;bottom:0;height:4px;width:45%;background:var(--acc);z-index:3}
+  .epRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;color:var(--mute);font-size:15px}
+  .epRow b{color:var(--txt);min-width:110px;text-align:center}
+  .epRow .chip{padding:7px 14px;font-size:17px;font-weight:800;color:var(--txt)}
+  .kidsHead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .kidsHead small{color:var(--mute);font-size:15px;font-weight:500}
   .card:focus{transform:scale(1.08);box-shadow:0 0 0 3px var(--focus),0 12px 30px rgba(0,0,0,.6);z-index:4}
   .ghost{flex:none;width:250px;aspect-ratio:16/9;border-radius:10px;background:linear-gradient(90deg,var(--panel),var(--panel2),var(--panel));background-size:200% 100%;animation:sh 1.2s infinite}
   @keyframes sh{to{background-position:-200% 0}}
@@ -159,7 +166,7 @@
     :root{--side:0px}
     #side{top:auto;right:0;width:auto!important;height:auto;flex-direction:row;justify-content:space-around;padding:6px 6px calc(6px + env(safe-area-inset-bottom))!important;background:var(--panel)!important;border-top:1px solid var(--line);align-items:center!important}
     #side .logo{display:none}
-    #side button{width:auto!important;height:auto;flex-direction:column;gap:2px!important;padding:4px 10px!important;font-size:20px;border-radius:10px}
+    #side button{width:auto!important;height:auto;flex-direction:column;gap:2px!important;padding:4px 6px!important;font-size:20px;border-radius:10px}
     #side button span{display:inline!important;font-size:11px!important}
     #side button.on{color:var(--acc)}
     #side button.on:after{display:none}
@@ -186,6 +193,7 @@
   <div class="logo">S</div>
   <button data-v="home" class="on" onclick="show('home')"><b>⌂</b><span>Inicio</span></button>
   <button data-v="explorar" onclick="show('explorar')"><b>▤</b><span>Géneros</span></button>
+  <button data-v="infantil" onclick="show('infantil')"><b>☺</b><span>Peques</span></button>
   <button data-v="buscar" onclick="show('buscar')"><b>⌕</b><span>Buscar</span></button>
   <button data-v="lista" onclick="show('lista')"><b>♡</b><span>Mi lista</span></button>
   <button data-v="apps" onclick="show('apps')"><b>▦</b><span>Apps</span></button>
@@ -211,6 +219,14 @@
     <div class="lbl">Orden</div><div class="chips" id="exSort"></div>
     <div id="exRes"></div>
   </div></section>
+
+  <!-- PEQUES -->
+  <section class="view" id="v-infantil">
+    <div class="pad" style="padding-bottom:6px">
+      <h2 class="title kidsHead">Peques <small>Dibujos para menores de 8 años</small></h2>
+    </div>
+    <div id="kidsRows"></div>
+  </section>
 
   <!-- BUSCAR -->
   <section class="view" id="v-buscar"><div class="pad">
@@ -280,6 +296,7 @@ const DEFAULT_KEY = '6cf88f7ebe4ad4bdfc44456dd7034e9b';
 let apiKey = load('apiKey', '') || DEFAULT_KEY;
 let mine = load('mine', KEYS.slice());
 let myList = load('myList', []);
+let seguir = load('seguir', []);   // títulos empezados (se apuntan al pulsar «Ver en…»)
 
 // ---------- utilidades ----------
 const $ = id => document.getElementById(id);
@@ -387,6 +404,7 @@ async function watchOn(key, it){
   let links = {};
   try{ links = await Promise.race([directLinks(it), sleep(6000).then(() => ({}))]); }catch(e){}
   const url = links[key] || pv.search(encodeURIComponent(it.title));
+  addSeguir(it, key);
   if(window.Android) Android.open(pv.pkgs.join(','), url);
   else window.open(url, '_blank');
 }
@@ -409,7 +427,9 @@ function itemFrom(r, forcedType){
   items[it.type+':'+it.id] = it;
   return it;
 }
-function getItem(type, id){ return items[type+':'+id] || myList.find(x => x.type===type && x.id===id); }
+function getItem(type, id){
+  return items[type+':'+id] || seguir.find(x => x.type===type && x.id===id) || myList.find(x => x.type===type && x.id===id);
+}
 
 function cardHTML(it, shape){
   const wide = shape === 'wide';
@@ -453,7 +473,7 @@ async function fightKeywords(){
   return ids;
 }
 // Consulta de catálogo en mis plataformas
-async function discover({type='movie', genre='all', prov='all', sort='pop', page=1}){
+async function discover({type='movie', genre='all', prov='all', sort='pop', page=1, extra=null}){
   const today = new Date().toISOString().slice(0,10);
   const dateKey = type === 'movie' ? 'primary_release_date' : 'first_air_date';
   const params = {
@@ -466,6 +486,7 @@ async function discover({type='movie', genre='all', prov='all', sort='pop', page
   if(sort === 'new'){ params.sort_by = dateKey + '.desc'; params['vote_count.gte'] = 10; }
   if(genre === 'fight'){ const kw = await fightKeywords(); if(kw.length) params.with_keywords = kw.join('|'); }
   else if(genre !== 'all') params.with_genres = genre;
+  if(extra) Object.assign(params, extra);
   const d = await tmdb('/discover/'+type, params);
   return { list: d.results.map(r => itemFrom(r, type)), pages: Math.min(d.total_pages||1, 500), total: d.total_results||0 };
 }
@@ -492,8 +513,9 @@ let homeBuilt = false, heroPool = [], heroIdx = 0, heroTimer = null, heroCur = n
 function buildHome(){
   homeBuilt = true;
   if(!mine.length){ $('homeRows').innerHTML = '<div class="empty">Marca tus plataformas en Ajustes.</div>'; return; }
-  $('homeRows').innerHTML = HOME_ROWS.map((r,i) =>
+  $('homeRows').innerHTML = '<div class="row" id="rowSeguir"></div>' + HOME_ROWS.map((r,i) =>
     `<div class="row" id="row${i}"><h3>${esc(r.t)}</h3><div class="strip">${'<div class="ghost"></div>'.repeat(6)}</div></div>`).join('');
+  renderSeguirRow();
   const io = new IntersectionObserver(ents => ents.forEach(e => {
     if(e.isIntersecting){ io.unobserve(e.target); loadRow(+e.target.id.slice(3)); }
   }), {rootMargin:'400px'});
@@ -560,8 +582,121 @@ function cardFocus(type, id){
   focusT = setTimeout(() => setHero(getItem(type, id)), 220);
 }
 
+// ---------- SEGUIR VIENDO ----------
+// Sofá no puede ver por dónde vas dentro de Netflix y compañía, así que apunta lo que abres desde aquí.
+// Al volver a abrirlo, la app oficial retoma la peli o el capítulo donde lo dejaste.
+function inSeguir(it){ return it ? seguir.find(x => x.type===it.type && x.id===it.id) : null; }
+function saveSeguir(){ store('seguir', seguir); renderSeguirRow(); }
+function addSeguir(it, key){
+  const old = inSeguir(it);
+  const rec = {
+    id: it.id, type: it.type, title: it.title, year: it.year, poster: it.poster, backdrop: it.backdrop,
+    overview: it.overview, vote: it.vote, prov: key, at: Date.now(),
+    s: old ? old.s : 1, e: old ? old.e : 1
+  };
+  seguir = [rec, ...seguir.filter(x => !(x.type===it.type && x.id===it.id))].slice(0, 30);
+  saveSeguir();
+  if(detailItem && detailItem.type===it.type && detailItem.id===it.id) renderDetailSeguir();
+}
+function seguirCard(r){
+  const img = r.backdrop ? IMG+'w500'+r.backdrop : r.poster ? IMG+'w342'+r.poster : '';
+  const pv = PROV[r.prov];
+  const lbl = r.type === 'tv' ? `T${r.s} · E${r.e}` : 'Película a medias';
+  return `<button class="card wide ${img?'':'noimg'}" onclick="openItem('${r.type}',${r.id})" onfocus="cardFocus('${r.type}',${r.id})">
+    <div class="img" ${img?`style="background-image:url('${img}')"`:''}></div>
+    <div class="prog">${lbl}</div>
+    <div class="pvs">${pv?`<i style="background:${pv.color}">${pv.name}</i>`:''}</div>
+    <div class="ct">${esc(r.title)}</div><div class="bar"></div></button>`;
+}
+function renderSeguirRow(){
+  const box = $('rowSeguir'); if(!box) return;
+  const focusedHere = box.contains(document.activeElement);
+  if(!seguir.length){ box.innerHTML = ''; box.style.display = 'none'; return; }
+  box.style.display = '';
+  box.innerHTML = `<h3>Seguir viendo</h3><div class="strip">${seguir.map(seguirCard).join('')}</div>`;
+  if(focusedHere){ const c = box.querySelector('.card'); if(c) c.focus({preventScroll:true}); }
+}
+// Bloque de la ficha: seguir, apuntar capítulo y quitar
+function renderDetailSeguir(){
+  const box = $('dSeguir'); if(!box || !detailItem) return;
+  const r = inSeguir(detailItem);
+  if(!r){ box.innerHTML = ''; return; }
+  const pv = PROV[r.prov] || PROV[KEYS[0]];
+  const ep = r.type !== 'tv' ? '' : `
+    <div class="epRow"><span>Voy por</span>
+      <button class="chip" id="ep-s-m" onclick="stepEp('s',-1)">−</button><b>Temporada ${r.s}</b><button class="chip" id="ep-s-p" onclick="stepEp('s',1)">+</button>
+      <button class="chip" id="ep-e-m" onclick="stepEp('e',-1)">−</button><b>Capítulo ${r.e}</b><button class="chip" id="ep-e-p" onclick="stepEp('e',1)">+</button>
+    </div>`;
+  box.innerHTML = `
+    <div class="where">Seguir viendo</div>
+    <div class="watchRow">
+      <button class="watch" id="dCont" style="background:${pv.color}" onclick="continueItem()">▶ Seguir en ${pv.name}</button>
+      <button class="btn" id="dDone" onclick="doneSeguir()">✓ Ya la he terminado</button>
+    </div>${ep}
+    <p class="note" style="margin-top:10px">${pv.name} retoma solo por donde lo dejaste.</p>`;
+}
+function continueItem(){
+  const r = inSeguir(detailItem); if(!r) return;
+  watchOn(r.prov, detailItem);
+}
+function stepEp(field, d){
+  const r = inSeguir(detailItem); if(!r) return;
+  r[field] = Math.max(1, r[field] + d);
+  if(field === 's') r.e = 1;      // temporada nueva → capítulo 1
+  r.at = Date.now();
+  saveSeguir();
+  renderDetailSeguir();
+  const b = $(`ep-${field}-${d < 0 ? 'm' : 'p'}`); if(b) b.focus();
+}
+function doneSeguir(){
+  const it = detailItem; if(!it) return;
+  seguir = seguir.filter(x => !(x.type===it.type && x.id===it.id));
+  saveSeguir();
+  renderDetailSeguir();
+  toast('Quitada de «Seguir viendo»');
+  const f = $('dWhere').querySelector('.watch') || $('dList'); if(f) f.focus();
+}
+
+// ---------- PEQUES (dibujos para menores de 8) ----------
+// Pelis: animación con calificación «G/PG» y sin terror, suspense, crimen ni guerra.
+// Series: dibujos que además están en la categoría infantil de TMDB.
+const KID_MOVIE = { with_genres:'16', without_genres:'27,53,80,10752', certification_country:'US', 'certification.lte':'PG' };
+const KID_BABY  = Object.assign({}, KID_MOVIE, { 'certification.lte':'G' });
+const KID_TV    = { with_genres:'16,10762', without_genres:'10765,80,9648' };
+const KIDS_ROWS = [
+  {t:'Series de dibujos', type:'tv', extra:KID_TV},
+  {t:'Películas de dibujos', type:'movie', extra:KID_MOVIE},
+  {t:'Para los más pequeños', type:'movie', extra:KID_BABY},
+  {t:'Las favoritas', type:'movie', sort:'top', extra:KID_MOVIE},
+  {t:'Dibujos en Disney+', type:'movie', prov:'disney', extra:KID_MOVIE},
+  {t:'Series de dibujos en Netflix', type:'tv', prov:'netflix', extra:KID_TV},
+  {t:'Novedades', type:'movie', sort:'new', extra:KID_MOVIE},
+  {t:'Series nuevas', type:'tv', sort:'new', extra:KID_TV}
+];
+let kidsBuilt = false;
+function buildKids(){
+  kidsBuilt = true;
+  if(!mine.length){ $('kidsRows').innerHTML = '<div class="empty">Marca tus plataformas en Ajustes.</div>'; return; }
+  const rows = KIDS_ROWS.filter(r => !r.prov || mine.includes(r.prov));
+  $('kidsRows').innerHTML = rows.map((r,i) =>
+    `<div class="row" id="krow${i}"><h3>${esc(r.t)}</h3><div class="strip">${'<div class="ghost"></div>'.repeat(6)}</div></div>`).join('');
+  rows.forEach(async (def, i) => {
+    const row = $('krow'+i), strip = row.querySelector('.strip');
+    try{
+      const {list} = await discover(def);
+      if(!list.length){ row.remove(); return; }
+      strip.innerHTML = list.map(it => cardHTML(it, 'wide')).join('');
+      decorate(list);
+      if(i === 0 && current === 'infantil' && isTV()){
+        const a = document.activeElement;
+        if(!a || a === document.body){ const c = strip.querySelector('.card'); if(c) c.focus({preventScroll:true}); }
+      }
+    }catch(e){ strip.innerHTML = '<div class="note" style="padding:20px 0">No se ha podido cargar.</div>'; }
+  });
+}
+
 // ---------- GÉNEROS ----------
-let ex = {type:'movie', genre:'16', prov:'all', sort:'pop', page:1}, exLoaded = false, exSeq = 0;
+let ex ={type:'movie', genre:'16', prov:'all', sort:'pop', page:1}, exLoaded = false, exSeq = 0;
 const SORTS = [['pop','Más populares'],['top','Mejor valoradas'],['new','Más recientes']];
 function chipRow(id, opts, cur, field){
   $(id).innerHTML = opts.map(([k,l]) =>
@@ -654,6 +789,7 @@ async function openItem(type, id){
         <div class="meta" id="dMeta">${ratingHTML(it.vote)}<span>${esc(it.year)}</span><span>${it.type==='tv'?'Serie':'Película'}</span></div>
         <p class="tagline" id="dTag"></p>
         <p class="ov">${esc(it.overview) || 'Sin sinopsis en español.'}</p>
+        <div id="dSeguir"></div>
         <div class="where">Ver en</div>
         <div id="dWhere"><div class="spin" style="margin:14px 0"></div></div>
         <div class="dbtns">
@@ -664,7 +800,10 @@ async function openItem(type, id){
     </div>
     <div class="row" id="dRecs"></div>`;
   D.classList.add('on'); D.scrollTop = 0;
+  const fromKids = current === 'infantil';   // en Peques no se muestran recomendaciones (podrían no ser para niños)
   updateListBtn();
+  renderDetailSeguir();
+  if($('dCont')) $('dCont').focus();
   directLinks(it); // se prepara el enlace directo mientras miras la ficha
 
   providersOf(type, id).then(p => {
@@ -678,8 +817,8 @@ async function openItem(type, id){
     if(!p.ours.length) html = '<div class="note">Ahora mismo no está en Netflix, HBO Max, Disney+ ni Prime Video.</div>';
     if(p.others.length) html += `<div class="where" style="margin-top:14px">También en</div><div class="other">${p.others.map(n=>`<div>${esc(n)}</div>`).join('')}</div>`;
     $('dWhere').innerHTML = html;
-    const first = $('dWhere').querySelector('.watch') || $('dList');
-    if(first) first.focus();
+    const first = $('dCont') || $('dWhere').querySelector('.watch') || $('dList');
+    if(first && !$('detail').contains(document.activeElement)) first.focus();
   }).catch(() => { if(detailItem === it){ $('dWhere').innerHTML = '<div class="note">No se ha podido comprobar dónde está.</div>'; $('dList').focus(); } });
 
   tmdb(`/${type}/${id}`, {append_to_response:'recommendations'}).then(d => {
@@ -691,7 +830,7 @@ async function openItem(type, id){
     $('dMeta').innerHTML = bits.join('');
     if(d.tagline) $('dTag').textContent = d.tagline;
     const recs = ((d.recommendations && d.recommendations.results) || []).slice(0, 18).map(r => itemFrom(r, type));
-    if(recs.length){
+    if(recs.length && !fromKids){
       $('dRecs').innerHTML = `<h3>Más como esta</h3><div class="strip">${recs.map(x => cardHTML(x,'wide')).join('')}</div>`;
       decorate(recs);
     }
@@ -755,7 +894,7 @@ function saveSettings(){
   apiKey = $('apikey').value.trim() || DEFAULT_KEY;
   mine = draftMine.slice();
   store('apiKey', apiKey); store('mine', mine);
-  homeBuilt = false; exLoaded = false;
+  homeBuilt = false; exLoaded = false; kidsBuilt = false;
   for(const k in provCache) delete provCache[k];
   toast('Guardado');
   show('home');
@@ -771,6 +910,7 @@ function show(v){
   window.scrollTo(0,0);
   if(v === 'home' && !homeBuilt && apiKey) buildHome();
   if(v === 'explorar' && !exLoaded) loadEx(true);
+  if(v === 'infantil' && !kidsBuilt && apiKey) buildKids();
   if(v === 'lista') renderList();
   if(v === 'apps') renderApps();
   if(v === 'ajustes') renderSettings();
