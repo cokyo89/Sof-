@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#14121A" android:pathData="M0,0h108v108h-108z" />
+    <!-- respaldo -->
+    <path android:fillColor="#F2B84B" android:pathData="M30,36h48a6,6 0,0 1,6 6v14h-60v-14a6,6 0,0 1,6 -6z" />
+    <!-- asiento -->
+    <path android:fillColor="#E8A23A" android:pathData="M22,54a6,6 0,0 1,12 0v6h40v-6a6,6 0,0 1,12 0v16a4,4 0,0 1,-4 4h-56a4,4 0,0 1,-4 -4z" />
+    <!-- patas -->
+    <path android:fillColor="#F2B84B" android:pathData="M30,74h6v6h-6zM72,74h6v6h-6z" />
+</vector>

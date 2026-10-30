@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sofá</title>
+<style>
+  :root{
+    --bg:#14121A; --panel:#1E1B26; --panel2:#272333; --line:#332E40;
+    --txt:#F3EFE6; --mute:#9A93A8; --acc:#F2B84B;
+    --netflix:#E50914; --prime:#1A98FF; --disney:#113CCF; --hbo:#8B5CF6;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  body{padding-bottom:76px;min-height:100vh}
+  header{position:sticky;top:0;z-index:5;background:var(--bg);padding:14px 16px 10px;display:flex;align-items:center;gap:10px}
+  header h1{font-size:22px;margin:0;flex:1;letter-spacing:-.3px}
+  header h1 span{color:var(--acc)}
+  .icon-btn{background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:12px;width:40px;height:40px;font-size:18px}
+  main{padding:0 16px}
+  .view{display:none}.view.on{display:block}
+  .search{display:flex;gap:8px;margin-bottom:12px}
+  .search input{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:14px;padding:13px 14px;font-size:16px;outline:none}
+  .search input:focus{border-color:var(--acc)}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;background:var(--panel);border:1px solid var(--line);color:var(--mute);padding:8px 13px;border-radius:999px;font-size:14px}
+  .chip.on{background:var(--txt);color:var(--bg);border-color:var(--txt);font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:12px}
+  .card{background:none;border:0;padding:0;text-align:left;color:var(--txt)}
+  .card .poster{aspect-ratio:2/3;border-radius:12px;background:var(--panel2) center/cover;position:relative;overflow:hidden}
+  .card .poster .noimg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:8px;text-align:center;font-size:12px;color:var(--mute)}
+  .card .t{font-size:13px;margin-top:6px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .card .y{font-size:12px;color:var(--mute)}
+  .badge{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.7);font-size:10px;padding:2px 6px;border-radius:6px;color:#fff}
+  .pvs{position:absolute;left:6px;right:6px;bottom:6px;display:flex;flex-wrap:wrap;gap:3px}
+  .pvs i{font-style:normal;font-size:9px;font-weight:700;color:#fff;padding:2px 5px;border-radius:5px;box-shadow:0 1px 3px rgba(0,0,0,.5)}
+  .lbl{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.6px;margin:2px 0 6px}
+  .empty{color:var(--mute);text-align:center;padding:40px 10px;line-height:1.5}
+  .more{display:block;width:100%;margin:16px 0;background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:12px;border-radius:12px;font-size:15px}
+  .apps{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .app{border:0;border-radius:18px;height:120px;color:#fff;font-size:19px;font-weight:700;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;padding:14px;position:relative}
+  .app small{font-weight:400;font-size:12px;opacity:.85}
+  .app.off{opacity:.35}
+  nav{position:fixed;bottom:0;left:0;right:0;background:var(--panel);border-top:1px solid var(--line);display:flex;padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+  nav button{flex:1;background:none;border:0;color:var(--mute);padding:6px 0;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px}
+  nav button b{font-size:20px;font-weight:400}
+  nav button.on{color:var(--acc)}
+  /* ficha */
+  .sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;display:none}
+  .sheet{position:fixed;left:0;right:0;bottom:0;max-height:88vh;overflow-y:auto;background:var(--panel);border-radius:22px 22px 0 0;z-index:21;transform:translateY(100%);transition:transform .25s ease;padding:0 0 24px}
+  .sheet.on{transform:none}
+  .sheet .hero{height:190px;background:var(--panel2) center/cover;position:relative}
+  .sheet .hero:after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 30%,var(--panel))}
+  .sheet .close{position:absolute;top:12px;right:12px;z-index:2;background:rgba(0,0,0,.55);border:0;color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px}
+  .sheet .body{padding:0 18px;margin-top:-40px;position:relative}
+  .sheet h2{margin:0 0 4px;font-size:22px}
+  .sheet .meta{color:var(--mute);font-size:13px;margin-bottom:12px}
+  .sheet p{color:#D6D0DF;font-size:14px;line-height:1.5}
+  .where{margin:16px 0 8px;font-size:13px;color:var(--mute);text-transform:uppercase;letter-spacing:.6px}
+  .watch{display:flex;align-items:center;gap:12px;width:100%;border:0;border-radius:14px;padding:14px;margin-bottom:8px;color:#fff;font-size:16px;font-weight:600}
+  .watch img{width:32px;height:32px;border-radius:8px}
+  .watch span{flex:1;text-align:left}
+  .other{display:flex;flex-wrap:wrap;gap:6px}
+  .other div{background:var(--panel2);border-radius:8px;padding:5px 9px;font-size:12px;color:var(--mute)}
+  .listbtn{width:100%;margin-top:14px;background:none;border:1px solid var(--acc);color:var(--acc);padding:12px;border-radius:12px;font-size:15px}
+  .listbtn.in{background:var(--acc);color:var(--bg)}
+  /* ajustes */
+  .field{margin-bottom:18px}
+  .field label{display:block;font-size:13px;color:var(--mute);margin-bottom:6px}
+  .field input{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:12px;font-size:15px}
+  .toggle{display:flex;align-items:center;justify-content:space-between;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+  .toggle input{width:22px;height:22px;accent-color:var(--acc)}
+  .note{font-size:12px;color:var(--mute);line-height:1.5}
+  .note a{color:var(--acc)}
+  .save{width:100%;background:var(--acc);color:var(--bg);border:0;border-radius:12px;padding:13px;font-size:16px;font-weight:700}
+  .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--txt);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;z-index:30;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.on{opacity:1}
+  .spin{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--acc);border-radius:50%;animation:s 0.8s linear infinite;margin:40px auto}
+  @keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="title">So<span>fá</span></h1>
+  <button class="icon-btn" onclick="show('ajustes')" aria-label="Ajustes">⚙</button>
+</header>
+
+<main>
+  <!-- EXPLORAR (por género, en todas mis plataformas) -->
+  <section class="view on" id="v-explorar">
+    <div class="chips" id="exType"></div>
+    <div class="lbl">Género</div>
+    <div class="chips" id="exGenre"></div>
+    <div class="lbl">Plataforma</div>
+    <div class="chips" id="exProv"></div>
+    <div class="lbl">Orden</div>
+    <div class="chips" id="exSort"></div>
+    <div id="exRes"></div>
+  </section>
+
+  <!-- BUSCAR -->
+  <section class="view" id="v-buscar">
+    <form class="search" onsubmit="event.preventDefault();doSearch(true)">
+      <input id="q" type="search" placeholder="Busca una peli o serie…" autocomplete="off" enterkeyhint="search">
+    </form>
+    <div class="chips" id="searchFilter"></div>
+    <div id="searchRes"><div class="empty">Escribe un título y te digo en cuál de tus plataformas está.</div></div>
+  </section>
+
+  <!-- MI LISTA -->
+  <section class="view" id="v-lista">
+    <div id="listRes"></div>
+  </section>
+
+  <!-- APPS -->
+  <section class="view" id="v-apps">
+    <div class="apps" id="appGrid"></div>
+    <p class="note" style="margin-top:16px">Pulsa para abrir la app. Si no la tienes instalada, te lleva a la Play Store.</p>
+  </section>
+
+  <!-- AJUSTES -->
+  <section class="view" id="v-ajustes">
+    <div class="field">
+      <label>Clave de la API de TMDB (gratuita)</label>
+      <input id="apikey" placeholder="Pega aquí tu API key (v3)" autocomplete="off" spellcheck="false">
+    </div>
+    <p class="note">Consíguela gratis en <a href="#" onclick="link('https://www.themoviedb.org/settings/api');return false">themoviedb.org → Ajustes → API</a>. Copia la «Clave de la API» (la corta, no el token largo).</p>
+    <div class="where">Mis plataformas</div>
+    <div id="provToggles"></div>
+    <button class="save" style="margin-top:12px" onclick="saveSettings()">Guardar</button>
+    <p class="note" style="margin-top:24px">Este producto usa la API de TMDB pero no está respaldado ni certificado por TMDB. Los datos de disponibilidad en plataformas los proporciona JustWatch a través de TMDB.</p>
+  </section>
+</main>
+
+<nav>
+  <button class="on" data-v="explorar" onclick="show('explorar')"><b>✦</b>Explorar</button>
+  <button data-v="buscar" onclick="show('buscar')"><b>⌕</b>Buscar</button>
+  <button data-v="lista" onclick="show('lista')"><b>♡</b>Mi lista</button>
+  <button data-v="apps" onclick="show('apps')"><b>▦</b>Apps</button>
+</nav>
+
+<div class="sheet-bg" id="sheetBg" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://api.themoviedb.org/3';
+const IMG = 'https://image.tmdb.org/t/p/';
+const REGION = 'ES';
+const LANG = 'es-ES';
+
+// Plataformas: ids de proveedor en TMDB/JustWatch, paquete Android y URL de búsqueda
+const PROV = {
+  netflix: { name:'Netflix', color:'var(--netflix)', ids:[8,1796], match:/netflix/i,
+             pkg:'com.netflix.mediaclient', search:q=>'https://www.netflix.com/search?q='+q },
+  hbo:     { name:'HBO Max', color:'var(--hbo)', ids:[1899,384,118], match:/\b(hbo|max)\b/i,
+             pkg:'com.wbd.stream', search:q=>'https://play.hbomax.com/search?q='+q },
+  disney:  { name:'Disney+', color:'var(--disney)', ids:[337], match:/disney/i,
+             pkg:'com.disney.disneyplus', search:q=>'https://www.disneyplus.com/search?q='+q },
+  prime:   { name:'Prime Video', color:'var(--prime)', ids:[119,9], match:/amazon prime video|prime video/i,
+             pkg:'com.amazon.avod.thirdpartyclient', search:q=>'https://www.primevideo.com/search/ref=atv_nb_sug?phrase='+q }
+};
+const KEYS = Object.keys(PROV);
+
+// ---------- almacenamiento ----------
+function load(k, def){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; }catch(e){ return def; } }
+function store(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+let apiKey = load('apiKey', '');
+let mine = load('mine', KEYS.slice());
+let myList = load('myList', []);
+
+// ---------- utilidades ----------
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2200); }
+function link(url){ if(window.Android) Android.openLink(url); else window.open(url,'_blank'); }
+function provKeyOf(p){
+  for(const k of KEYS){ if(PROV[k].ids.includes(p.provider_id) || PROV[k].match.test(p.provider_name)) return k; }
+  return null;
+}
+function idsFor(keys){ return keys.flatMap(k => PROV[k].ids).join('|'); }
+
+async function tmdb(path, params={}){
+  if(!apiKey){ show('ajustes'); toast('Primero pega tu clave de TMDB'); throw new Error('nokey'); }
+  const u = new URL(API + path);
+  u.searchParams.set('api_key', apiKey);
+  u.searchParams.set('language', LANG);
+  for(const [k,v] of Object.entries(params)) u.searchParams.set(k, v);
+  const r = await fetch(u);
+  if(r.status === 401){ toast('La clave de TMDB no es válida'); show('ajustes'); throw new Error('badkey'); }
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+
+// caché de disponibilidad por título
+const provCache = {};
+async function providersOf(type, id){
+  const key = type+':'+id;
+  if(provCache[key]) return provCache[key];
+  const d = await tmdb(`/${type}/${id}/watch/providers`);
+  const es = (d.results && d.results[REGION]) || {};
+  const flat = es.flatrate || [];
+  const res = { link: es.link, ours:[], others:[] };
+  const seen = new Set();
+  for(const p of flat){
+    const k = provKeyOf(p);
+    if(k && !seen.has(k)){ seen.add(k); res.ours.push({key:k, logo:p.logo_path}); }
+    else if(!k) res.others.push(p.provider_name);
+  }
+  provCache[key] = res;
+  return res;
+}
+
+// ---------- navegación ----------
+let current = 'explorar';
+function show(v){
+  current = v;
+  document.querySelectorAll('.view').forEach(e => e.classList.toggle('on', e.id === 'v-'+v));
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  $('title').innerHTML = v === 'ajustes' ? 'Ajustes' : 'So<span>fá</span>';
+  window.scrollTo(0,0);
+  if(v === 'explorar' && !exLoaded) loadEx(true);
+  if(v === 'lista') renderList();
+  if(v === 'apps') renderApps();
+  if(v === 'ajustes') renderSettings();
+}
+window.onBack = function(){
+  if($('sheet').classList.contains('on')){ closeSheet(); return true; }
+  if(current !== 'explorar'){ show('explorar'); return true; }
+  return false;
+};
+
+// ---------- tarjetas ----------
+function itemFrom(r, forcedType){
+  const type = forcedType || r.media_type;
+  return {
+    id: r.id, type,
+    title: r.title || r.name || '',
+    year: (r.release_date || r.first_air_date || '').slice(0,4),
+    poster: r.poster_path, backdrop: r.backdrop_path,
+    overview: r.overview || ''
+  };
+}
+const items = {};
+function cardHTML(it){
+  items[it.type+':'+it.id] = it;
+  const img = it.poster ? `style="background-image:url('${IMG}w342${it.poster}')"` : '';
+  return `<button class="card" data-k="${it.type}:${it.id}" onclick="openItem('${it.type}',${it.id})">
+    <div class="poster" ${img}>${it.poster?'':`<div class="noimg">${esc(it.title)}</div>`}
+      <span class="badge">${it.type==='tv'?'Serie':'Peli'}</span><div class="pvs"></div></div>
+    <div class="t">${esc(it.title)}</div><div class="y">${esc(it.year)}</div></button>`;
+}
+
+// ---------- buscar ----------
+let searchFilter = 'all', searchPage = 1, searchTotal = 1, searchQ = '';
+function renderSearchFilter(){
+  const opts = [['all','Todo'],['mine','Solo mis plataformas']];
+  $('searchFilter').innerHTML = opts.map(([k,l]) =>
+    `<button class="chip ${searchFilter===k?'on':''}" onclick="searchFilter='${k}';renderSearchFilter();doSearch(true)">${l}</button>`).join('');
+}
+async function doSearch(reset){
+  const q = $('q').value.trim();
+  if(!q) return;
+  if(reset){ searchPage = 1; searchQ = q; $('searchRes').innerHTML = '<div class="spin"></div>'; document.activeElement.blur(); }
+  try{
+    const d = await tmdb('/search/multi', { query: searchQ, page: searchPage, include_adult:'false' });
+    searchTotal = d.total_pages || 1;
+    let list = d.results.filter(r => r.media_type==='movie' || r.media_type==='tv').map(r => itemFrom(r));
+    if(searchFilter === 'mine'){
+      const checks = await Promise.all(list.map(it => providersOf(it.type, it.id).catch(()=>({ours:[]}))));
+      list = list.filter((it,i) => checks[i].ours.some(o => mine.includes(o.key)));
+    }
+    const html = list.map(cardHTML).join('');
+    const box = $('searchRes');
+    if(reset) box.innerHTML = list.length ? `<div class="grid" id="sGrid">${html}</div>` : '<div class="empty">No he encontrado nada'+(searchFilter==='mine'?' en tus plataformas':'')+'.</div>';
+    else $('sGrid').insertAdjacentHTML('beforeend', html);
+    decorate(list);
+    const old = $('sMore'); if(old) old.remove();
+    if(searchPage < searchTotal && (list.length || !reset))
+      box.insertAdjacentHTML('beforeend', '<button class="more" id="sMore" onclick="searchPage++;doSearch(false)">Ver más</button>');
+  }catch(e){ if(!/key/.test(e.message)) $('searchRes').innerHTML = '<div class="empty">No se ha podido buscar. ¿Hay conexión?</div>'; }
+}
+
+// ---------- explorar por género ----------
+// Géneros de TMDB (las series usan algunos códigos distintos a las películas)
+const GENRES = {
+  movie: [['all','Todos'],['16','Animación'],['28','Acción'],['fight','Peleas'],['80','Crimen'],['35','Comedia'],
+          ['27','Terror'],['53','Suspense'],['878','Ciencia ficción'],['14','Fantasía'],['12','Aventura'],['18','Drama'],
+          ['10749','Romance'],['10751','Familia'],['9648','Misterio'],['99','Documental'],['36','Historia'],
+          ['10752','Bélica'],['37','Western'],['10402','Música']],
+  tv:    [['all','Todos'],['16','Animación'],['10759','Acción y aventura'],['fight','Peleas'],['80','Crimen'],['35','Comedia'],
+          ['10765','Ciencia ficción y fantasía'],['18','Drama'],['9648','Misterio'],['10751','Familia'],['10762','Infantil'],
+          ['99','Documental'],['10764','Reality'],['10768','Bélica y política'],['37','Western']]
+};
+const SORTS = [['pop','Más populares'],['top','Mejor valoradas'],['new','Más recientes']];
+// «Peleas» no es un género en TMDB: se busca por palabras clave
+const FIGHT_WORDS = ['martial arts','boxing','mixed martial arts','kung fu','karate','fighting','street fighting','wrestling'];
+
+let exType = 'movie', exGenre = '16', exProv = 'all', exSort = 'pop', exPage = 1, exLoaded = false, exSeq = 0;
+
+function chipRow(id, opts, cur, setter){
+  $(id).innerHTML = opts.map(([k,l]) =>
+    `<button class="chip ${cur===k?'on':''}" onclick="${setter}('${k}')">${l}</button>`).join('');
+}
+function renderExChips(){
+  chipRow('exType', [['movie','Películas'],['tv','Series']], exType, 'setExType');
+  chipRow('exGenre', GENRES[exType], exGenre, 'setExGenre');
+  chipRow('exProv', [['all','Todas mis plataformas'], ...mine.map(k => [k, PROV[k].name])], exProv, 'setExProv');
+  chipRow('exSort', SORTS, exSort, 'setExSort');
+  const on = $('exGenre').querySelector('.on');
+  if(on) on.scrollIntoView({inline:'center', block:'nearest'});
+}
+function setExType(v){ exType = v; if(!GENRES[v].some(g => g[0]===exGenre)) exGenre = 'all'; loadEx(true); }
+function setExGenre(v){ exGenre = v; loadEx(true); }
+function setExProv(v){ exProv = v; loadEx(true); }
+function setExSort(v){ exSort = v; loadEx(true); }
+
+async function fightKeywords(){
+  let ids = load('fightKw', null);
+  if(ids && ids.length) return ids;
+  const found = await Promise.all(FIGHT_WORDS.map(w =>
+    tmdb('/search/keyword', {query:w}).then(d => (d.results||[]).filter(r => r.name.toLowerCase()===w).map(r => r.id)).catch(()=>[])));
+  ids = [...new Set(found.flat())];
+  if(ids.length) store('fightKw', ids);
+  return ids;
+}
+
+async function loadEx(reset){
+  exLoaded = true;
+  if(exProv !== 'all' && !mine.includes(exProv)) exProv = 'all';
+  renderExChips();
+  if(!mine.length){ $('exRes').innerHTML = '<div class="empty">Marca tus plataformas en Ajustes.</div>'; return; }
+  const seq = ++exSeq;
+  if(reset){ exPage = 1; $('exRes').innerHTML = '<div class="spin"></div>'; }
+  const today = new Date().toISOString().slice(0,10);
+  const dateKey = exType === 'movie' ? 'primary_release_date' : 'first_air_date';
+  const params = {
+    watch_region: REGION,
+    with_watch_providers: idsFor(exProv === 'all' ? mine : [exProv]),
+    with_watch_monetization_types: 'flatrate',
+    page: exPage
+  };
+  params[dateKey + '.lte'] = today;
+  if(exSort === 'pop') params.sort_by = 'popularity.desc';
+  if(exSort === 'top'){ params.sort_by = 'vote_average.desc'; params['vote_count.gte'] = exType==='movie' ? 300 : 150; }
+  if(exSort === 'new'){ params.sort_by = dateKey + '.desc'; params['vote_count.gte'] = 10; }
+  try{
+    if(exGenre === 'fight'){
+      const kw = await fightKeywords();
+      if(!kw.length) throw new Error('kw');
+      params.with_keywords = kw.join('|');
+    } else if(exGenre !== 'all') params.with_genres = exGenre;
+
+    const d = await tmdb('/discover/'+exType, params);
+    if(seq !== exSeq) return;
+    const list = d.results.map(r => itemFrom(r, exType));
+    const html = list.map(cardHTML).join('');
+    const total = d.total_results || 0;
+    if(reset) $('exRes').innerHTML = html
+      ? `<div class="note" style="margin:4px 0 10px">${total.toLocaleString('es-ES')} títulos</div><div class="grid" id="eGrid">${html}</div>`
+      : '<div class="empty">No hay nada de este género en tus plataformas.</div>';
+    else $('eGrid').insertAdjacentHTML('beforeend', html);
+    const old = $('eMore'); if(old) old.remove();
+    if(exPage < Math.min(d.total_pages||1, 500))
+      $('exRes').insertAdjacentHTML('beforeend','<button class="more" id="eMore" onclick="exPage++;loadEx(false)">Ver más</button>');
+    decorate(list);
+  }catch(e){ if(seq === exSeq && !/key/.test(e.message)) $('exRes').innerHTML = '<div class="empty">No se ha podido cargar. ¿Hay conexión?</div>'; }
+}
+
+// Pone en cada carátula en qué plataformas está
+function decorate(list){
+  list.forEach(it => {
+    providersOf(it.type, it.id).then(p => {
+      const tags = p.ours.filter(o => mine.includes(o.key))
+        .map(o => `<i style="background:${PROV[o.key].color}">${PROV[o.key].name}</i>`).join('');
+      document.querySelectorAll(`[data-k="${it.type}:${it.id}"] .pvs`).forEach(el => el.innerHTML = tags);
+    }).catch(()=>{});
+  });
+}
+
+// ---------- ficha ----------
+let sheetItem = null;
+async function openItem(type, id){
+  const it = items[type+':'+id] || myList.find(x => x.type===type && x.id===id);
+  if(!it) return;
+  sheetItem = it;
+  const bg = it.backdrop || it.poster;
+  const sh = $('sheet');
+  sh.innerHTML = `
+    <div class="hero" ${bg?`style="background-image:url('${IMG}w780${bg}')"`:''}></div>
+    <button class="close" onclick="closeSheet()">✕</button>
+    <div class="body">
+      <h2>${esc(it.title)}</h2>
+      <div class="meta">${it.type==='tv'?'Serie':'Película'}${it.year?' · '+esc(it.year):''}</div>
+      <p>${esc(it.overview) || 'Sin sinopsis en español.'}</p>
+      <div class="where">Dónde verla</div>
+      <div id="whereBox"><div class="spin" style="margin:16px auto"></div></div>
+      <button class="listbtn" id="listBtn" onclick="toggleList()"></button>
+    </div>`;
+  updateListBtn();
+  $('sheetBg').style.display = 'block';
+  requestAnimationFrame(() => sh.classList.add('on'));
+  try{
+    const p = await providersOf(type, id);
+    if(sheetItem !== it) return;
+    const q = encodeURIComponent(it.title);
+    let html = '';
+    const sorted = p.ours.slice().sort((a,b) => mine.includes(b.key) - mine.includes(a.key));
+    for(const o of sorted){
+      const pv = PROV[o.key], isMine = mine.includes(o.key);
+      html += `<button class="watch" style="background:${pv.color};${isMine?'':'opacity:.45'}" onclick="openApp('${o.key}','${q}')">
+        ${o.logo?`<img src="${IMG}w92${o.logo}" alt="">`:''}<span>${pv.name}</span>${isMine?'Abrir ›':'No suscrito'}</button>`;
+    }
+    if(!p.ours.length) html += '<div class="note" style="margin-bottom:10px">No está incluida en Netflix, HBO Max, Disney+ ni Prime Video ahora mismo.</div>';
+    if(p.others.length) html += `<div class="where" style="margin-top:12px">También en</div><div class="other">${p.others.map(n=>`<div>${esc(n)}</div>`).join('')}</div>`;
+    $('whereBox').innerHTML = html;
+  }catch(e){ $('whereBox').innerHTML = '<div class="note">No se ha podido comprobar la disponibilidad.</div>'; }
+}
+function closeSheet(){
+  $('sheet').classList.remove('on');
+  $('sheetBg').style.display = 'none';
+  sheetItem = null;
+}
+function openApp(key, q){
+  const pv = PROV[key];
+  const url = q ? pv.search(q) : '';
+  if(window.Android) Android.open(pv.pkg, url);
+  else window.open(url || 'https://play.google.com/store/apps/details?id='+pv.pkg, '_blank');
+}
+
+// ---------- mi lista ----------
+function inList(it){ return myList.some(x => x.type===it.type && x.id===it.id); }
+function updateListBtn(){
+  const b = $('listBtn'); if(!b || !sheetItem) return;
+  const on = inList(sheetItem);
+  b.classList.toggle('in', on);
+  b.textContent = on ? '✓ En mi lista' : '+ Añadir a mi lista';
+}
+function toggleList(){
+  const it = sheetItem; if(!it) return;
+  if(inList(it)){ myList = myList.filter(x => !(x.type===it.type && x.id===it.id)); toast('Quitada de tu lista'); }
+  else { myList.unshift(it); toast('Añadida a tu lista'); }
+  store('myList', myList);
+  updateListBtn();
+  if(current === 'lista') renderList();
+}
+function renderList(){
+  $('listRes').innerHTML = myList.length
+    ? `<div class="grid">${myList.map(cardHTML).join('')}</div>`
+    : '<div class="empty">Tu lista está vacía.<br>Abre cualquier título y pulsa «Añadir a mi lista».</div>';
+}
+
+// ---------- apps ----------
+function renderApps(){
+  $('appGrid').innerHTML = KEYS.map(k => {
+    const pv = PROV[k];
+    let sub = mine.includes(k) ? 'Suscrito' : 'No suscrito';
+    if(window.Android && !Android.installed(pv.pkg)) sub = 'No instalada · Play Store';
+    return `<button class="app ${mine.includes(k)?'':'off'}" style="background:${pv.color}" onclick="openApp('${k}','')">${pv.name}<small>${sub}</small></button>`;
+  }).join('');
+}
+
+// ---------- ajustes ----------
+function renderSettings(){
+  $('apikey').value = apiKey;
+  $('provToggles').innerHTML = KEYS.map(k =>
+    `<label class="toggle"><span>${PROV[k].name}</span><input type="checkbox" value="${k}" ${mine.includes(k)?'checked':''}></label>`).join('');
+}
+function saveSettings(){
+  apiKey = $('apikey').value.trim();
+  mine = [...document.querySelectorAll('#provToggles input:checked')].map(i => i.value);
+  store('apiKey', apiKey); store('mine', mine);
+  exLoaded = false;
+  for(const k in provCache) delete provCache[k];
+  toast('Guardado');
+  show('explorar');
+}
+
+// ---------- arranque ----------
+renderSearchFilter();
+if(!apiKey) show('ajustes'); else show('explorar');
+</script>
+</body>
+</html>
